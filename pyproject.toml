@@ -30,7 +30,6 @@ exclude = [
     "build",
     "dist",
     "venv",
-    "Makefile",
     "migrations",
 ]
 
@@ -80,11 +79,11 @@ include_trailing_comma = true
 force_grid_wrap = 0
 use_parentheses = true
 line_length = 79
-skip = '.venv,venv,env,anomaly_detector'
+skip = '.venv,venv,env'
 src_paths = ["src"]
 
 [tool.pytest.ini_options]
-addopts = '-s -v --cache-clear'
+addopts = '-s -vvv --cache-clear'
 asyncio_mode = 'auto'
 cache_dir = '/tmp'
 python_files = 'tests.py test_*.py *_test.py'
@@ -108,7 +107,7 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 show_error_codes = true
 namespace_packages = true
-exclude = ["migrations", "simulator", "anomaly_detector", "estimator"]
+exclude = ["migrations"]
 
 # Silint "type import errors" as our 3rd-party libs does not have types
 # Check: https://mypy.readthedocs.io/en/latest/config_file.html#import-discovery

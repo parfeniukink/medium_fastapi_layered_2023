@@ -7,8 +7,9 @@ from pydantic import ValidationError
 
 from src.config import settings
 from src.domain.authentication import TokenPayload
-from src.domain.users import User, UsersRepository
-from src.infrastructure.errors import AuthenticationError
+from src.domain.users import UserFlat, UsersRepository
+from src.infrastructure.application import AuthenticationError
+from src.infrastructure.database import transaction
 
 __all__ = ("get_current_user",)
 
@@ -18,7 +19,7 @@ oauth2_oauth = OAuth2PasswordBearer(
 )
 
 
-async def get_current_user(token: str = Depends(oauth2_oauth)) -> User:
+async def get_current_user(token: str = Depends(oauth2_oauth)) -> UserFlat:
     try:
         payload = jwt.decode(
             token,
@@ -32,7 +33,8 @@ async def get_current_user(token: str = Depends(oauth2_oauth)) -> User:
     except (JWTError, ValidationError):
         raise AuthenticationError
 
-    user = await UsersRepository().get(id_=token_payload.sub)
+    async with transaction():
+        user = await UsersRepository().get(id_=token_payload.sub)
 
     # TODO: Check if the token is in the blacklist
 

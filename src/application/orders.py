@@ -1,14 +1,35 @@
-from src.domain.orders import Order, OrdersRepository, OrderUncommited
-from src.domain.users import User
-from src.infrastructure.database.transaction import transaction
+from src.domain.orders import (
+    Order,
+    OrderFlat,
+    OrdersRepository,
+    OrderUncommited,
+)
+from src.domain.users import UserFlat
+from src.infrastructure.database import transaction
 
 
-@transaction
-async def create(payload: dict, user: User) -> Order:
+async def all() -> list[OrderFlat]:
+    """Get all orders from the database."""
+
+    async with transaction():
+        repository = OrdersRepository()
+        orders = [order async for order in repository.all()]
+
+    return orders
+
+
+async def create(payload: dict, user: UserFlat) -> Order:
+    """Create a new order from huge json, does not matter..."""
+
     payload.update(user_id=user.id)
 
-    order = await OrdersRepository().create(OrderUncommited(**payload))
+    async with transaction():
+        repository = OrdersRepository()
+        order_flat: OrderFlat = await repository.create(
+            OrderUncommited(**payload)
+        )
+        rich_order: Order = await repository.get(order_flat.id)
 
     # Do som other stuff...
 
-    return order
+    return rich_order

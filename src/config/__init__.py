@@ -1,24 +1,23 @@
 from pathlib import Path
 
-from pydantic import BaseConfig, BaseModel, BaseSettings
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-# API Settings
 class APIUrlsSettings(BaseModel):
-    """Configure public urls."""
+    """API public urls settings."""
 
     docs: str = "/docs"
     redoc: str = "/redoc"
 
 
 class PublicApiSettings(BaseModel):
-    """Configure public API settings."""
+    """Configure public API service settings."""
 
-    name: str = "Backend"
+    name: str = "CHANGEME"
     urls: APIUrlsSettings = APIUrlsSettings()
 
 
-# Database Settings
 class DatabaseSettings(BaseModel):
     name: str = "db.sqlite3"
 
@@ -27,11 +26,6 @@ class DatabaseSettings(BaseModel):
         return f"sqlite+aiosqlite:///./{self.name}"
 
 
-class KafkaSettings(BaseModel):
-    bootstrap_servers: str = "localhost:9092"
-
-
-# Logging Settings
 class LoggingSettings(BaseModel):
     """Configure the logging engine."""
 
@@ -41,10 +35,10 @@ class LoggingSettings(BaseModel):
     format: str = "{time:YYYY-MM-DD HH:mm:ss} | {level: <5} | {message}"
 
     # The .log filename
-    file: str = "backend"
+    file: str = "CHANGEME"
 
     # The .log file Rotation
-    rotation: str = "1MB"
+    rotation: str = "10MB"
 
     # The type of compression
     compression: str = "zip"
@@ -67,31 +61,26 @@ class AuthenticationSettings(BaseModel):
     scheme: str = "Bearer"
 
 
-# Settings are powered by pydantic
-# https://pydantic-docs.helpmanual.io/usage/settings/
 class Settings(BaseSettings):
-    debug: bool = True
-
-    # Project file system
-    root_dir: Path
-    src_dir: Path
+    model_config = SettingsConfigDict(
+        env_nested_delimiter="__", env_file=".env", extra="ignore"
+    )
 
     # Infrastructure settings
     database: DatabaseSettings = DatabaseSettings()
 
     # Application configuration
+    root_dir: Path
+    src_dir: Path
+    debug: bool = True
     public_api: PublicApiSettings = PublicApiSettings()
     logging: LoggingSettings = LoggingSettings()
     authentication: AuthenticationSettings = AuthenticationSettings()
 
-    class Config(BaseConfig):
-        env_nested_delimiter: str = "__"
-        env_file: str = ".env"
-
 
 # Define the root path
 # --------------------------------------
-ROOT_PATH = Path(__file__).parent.parent
+ROOT_PATH = Path(__file__).parent.parent.parent
 
 # ======================================
 # Load settings

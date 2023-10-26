@@ -75,7 +75,7 @@ run:
 .PHONY: run.dev  # run the application in a dev mode
 run.dev:
 	# NOTE:configurable via environment variables
-	uvicorn src.main
+	uvicorn src.main:app
 
 
 

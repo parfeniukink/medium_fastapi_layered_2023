@@ -91,7 +91,7 @@ format:
 
 
 .PHONY: check.types  # check type annotations
-types:
+check.types:
 	python -m mypy --check-untyped-defs .
 
 

@@ -1,8 +1,13 @@
 from typing import AsyncGenerator
 
+from sqlalchemy import Result, select
+from sqlalchemy.orm import joinedload
+
+from src.infrastructure.application import NotFoundError
 from src.infrastructure.database import BaseRepository, OrdersTable
 
-from .models import Order, OrderUncommited
+from .aggregates import Order
+from .entities import OrderFlat, OrderUncommited
 
 all = ("OrdersRepository",)
 
@@ -10,14 +15,27 @@ all = ("OrdersRepository",)
 class OrdersRepository(BaseRepository[OrdersTable]):
     schema_class = OrdersTable
 
-    async def all(self) -> AsyncGenerator[Order, None]:
+    async def all(self) -> AsyncGenerator[OrderFlat, None]:
         async for instance in self._all():
-            yield Order.from_orm(instance)
+            yield OrderFlat.model_validate(instance)
 
     async def get(self, id_: int) -> Order:
-        instance = await self._get(key="id", value=id_)
-        return Order.from_orm(instance)
+        query = (
+            select(OrdersTable)
+            .options(
+                joinedload(getattr(self.schema_class, "user")),
+                joinedload(getattr(self.schema_class, "product")),
+            )
+            .where(getattr(self.schema_class, "id") == id_)
+        )
 
-    async def create(self, schema: OrderUncommited) -> Order:
-        instance: OrdersTable = await self._save(schema.dict())
-        return Order.from_orm(instance)
+        result: Result = await self.execute(query)
+
+        if not (instance := result.scalars().one_or_none()):
+            raise NotFoundError
+
+        return Order.model_validate(instance)
+
+    async def create(self, schema: OrderUncommited) -> OrderFlat:
+        instance: OrdersTable = await self._save(schema.model_dump())
+        return OrderFlat.model_validate(instance)

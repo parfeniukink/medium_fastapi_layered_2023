@@ -1,3 +1,62 @@
+[tool.tox]
+legacy_tox_ini = """
+    [tox]
+    min_version = 4.0
+    env_list = py311
+    skipsdist = true
+    basepython = python3.11
+
+    [testenv]
+    deps = -rrequirements/dev.txt
+    allowlist_externals = make
+    commands = make check
+"""
+
+
+
+[project]
+name = "changeme"
+version = "0.1.0"
+dependencies = [
+    "SQLAlchemy[asyncio,mypy]>=2.0.21",
+    "aioredis>=2.0",
+    "aiosqlite>=0.19",
+    "alembic>=1.12",
+    "fastapi==0.103.2",
+    "gunicorn>=21.2",
+    "loguru>=0.7",
+    "passlib[bcrypt]>=1.7",
+    "pydantic-settings>=2.0",
+    "pydantic[email]>=2.4",
+    "python-jose[cryptography]>=3.3",
+    "uvicorn[standard]>=0.23.2",
+    "websockets>=11.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=23.9",
+    "httpx>=0.25",
+    "isort>=5.12",
+    "mypy>=1.5",
+    "polyfactory>=2.9",
+    "pytest-asyncio>=0.21",
+    "pytest-cov>=4.1",
+    "pytest-env>=1.0",
+    "pytest-lazy-fixture>=0.6",
+    "pytest-mock>=3.11",
+    "pytest>=7.4",
+    "ruff>=0.0.292",
+    "tox>=4.11",
+    "types-passlib>=1.7",
+    "types-python-jose>=3.3",
+]
+
+
+[tool.pip-tools]
+generate_hashes = true
+
+
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 select = ["E", "F"]
@@ -66,7 +125,7 @@ exclude = '''
     | buck-out
     | build
     | dist
-    | migrations
+    | .tox
   )/
                      # the root of the project
 )
@@ -79,8 +138,8 @@ include_trailing_comma = true
 force_grid_wrap = 0
 use_parentheses = true
 line_length = 79
-skip = '.venv,venv,env'
-src_paths = ["src"]
+skip = 'venv,.tox'
+src_paths = ["."]
 
 [tool.pytest.ini_options]
 addopts = '-s -vvv --cache-clear'
@@ -95,11 +154,14 @@ omit = [
     "*/conftest.py",
     "*/test_*.py",
     "*/migrations/",
+    "*/venv/",
+    "*/.tox/",
 ]
 
 [tool.mypy]
 plugins = [
-    "pydantic.mypy"
+    "pydantic.mypy",
+    "sqlalchemy.ext.mypy.plugin"
 ]
 python_version = '3.11'
 files = ['*.py',]
@@ -107,7 +169,7 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 show_error_codes = true
 namespace_packages = true
-exclude = ["migrations"]
+exclude = ["venv", ".tox"]
 
 # Silint "type import errors" as our 3rd-party libs does not have types
 # Check: https://mypy.readthedocs.io/en/latest/config_file.html#import-discovery
@@ -118,3 +180,9 @@ module = [
     "websockets.exceptions",
 ]
 ignore_missing_imports = true
+
+
+[tool.pyright]
+exclude = ["**/__pycache__", "**/venv/*", "**/.tox/*"]
+typeCheckingMode = "off"  # off, basic, strict
+useLibraryCodeForTypes = true

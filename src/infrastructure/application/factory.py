@@ -6,7 +6,8 @@ from fastapi import APIRouter, FastAPI
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 
-from src.infrastructure.errors import (
+from . import processes
+from .errors import (
     BaseError,
     custom_base_errors_handler,
     pydantic_validation_errors_handler,
@@ -21,6 +22,7 @@ def create(
     rest_routers: Iterable[APIRouter],
     startup_tasks: Iterable[Callable[[], Coroutine]] | None = None,
     shutdown_tasks: Iterable[Callable[[], Coroutine]] | None = None,
+    startup_processes: Iterable[processes._ProcessBlock] | None = None,
     **kwargs,
 ) -> FastAPI:
     """The application factory using FastAPI framework.
@@ -52,5 +54,10 @@ def create(
     if shutdown_tasks:
         for task in shutdown_tasks:
             app.on_event("shutdown")(task)
+
+    # Define startup processes
+    if startup_processes:
+        for callback, namespace, key in startup_processes:
+            processes.run(namespace=namespace, key=key, callback=callback)
 
     return app

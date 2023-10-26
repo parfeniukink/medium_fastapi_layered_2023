@@ -1,9 +1,9 @@
 from typing import TypeVar
 
 from sqlalchemy import Column, ForeignKey, Integer, MetaData, String
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import Mapped, declarative_base, relationship
 
-__all__ = ("UsersTable", "ProductsTable", "OrdersTable")
+__all__ = ("Base", "UsersTable", "ProductsTable", "OrdersTable")
 
 meta = MetaData(
     naming_convention={
@@ -24,33 +24,32 @@ class _Base:
 
 Base = declarative_base(cls=_Base, metadata=meta)
 
-ConcreteTable = TypeVar("ConcreteTable", bound=Base)  # type: ignore
+ConcreteTable = TypeVar("ConcreteTable", bound=Base)
 
 
 class UsersTable(Base):
     __tablename__ = "users"
 
-    username: str = Column(String, nullable=False)  # type: ignore
-    password: str = Column(String, nullable=False)  # type: ignore
+    username: str = Column(String, nullable=False)
+    password: str = Column(String, nullable=False)
 
 
 class ProductsTable(Base):
     __tablename__ = "products"
 
-    name: str = Column(String, nullable=False)  # type: ignore
-    price: int = Column(Integer, nullable=False)  # type: ignore
+    name: str = Column(String, nullable=False)
+    price: int = Column(Integer, nullable=False)
 
 
 class OrdersTable(Base):
     __tablename__ = "orders"
 
-    amount: int = Column(Integer, nullable=False, default=1)  # type: ignore
+    amount: int = Column(Integer, nullable=False, default=1)
 
-    product_id: int = Column(
-        ForeignKey(ProductsTable.id),
-        nullable=False,
-    )  # type: ignore[var-annotated]
-    user_id: int = Column(
-        ForeignKey(UsersTable.id),
-        nullable=False,
-    )  # type: ignore[var-annotated]
+    product_id: int = Column(ForeignKey(ProductsTable.id), nullable=False)
+    user_id: int = Column(ForeignKey(UsersTable.id), nullable=False)
+
+    user: "Mapped[UsersTable]" = relationship("UsersTable", uselist=False)
+    product: "Mapped[ProductsTable]" = relationship(
+        "ProductsTable", uselist=False
+    )
